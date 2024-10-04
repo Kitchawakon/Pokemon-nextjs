@@ -1,8 +1,10 @@
+// src/app/pokemon/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
+import Link from 'next/link';
 
+// Define colors for each Pokemon type
 const typeColors: { [key: string]: string } = {
   grass: '#78C850',
   poison: '#A040A0',
@@ -21,110 +23,79 @@ const typeColors: { [key: string]: string } = {
   dragon: '#7038F8',
   dark: '#705848',
   steel: '#B8B8D0',
+  flying: '#A890F0',
 };
 
-interface PokemonType {
-  type: { name: string };
-}
-
 interface Pokemon {
-  id: number;
   name: string;
-  types: PokemonType[];
+  url: string;
+  types: { type: { name: string } }[];
   sprites: { front_default: string };
 }
 
 export default function PokemonList() {
-  const [pokemonList, setPokemonList] = useState<Pokemon[]>([]);
-  const [loading, setLoading] = useState<boolean>(true); // กำหนดประเภทที่ชัดเจน
+  const [pokemon, setPokemon] = useState<Pokemon[]>([]);
+  const [limit, setLimit] = useState(20); // เริ่มแสดง 20 ตัว
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch('https://pokeapi.co/api/v2/pokemon?limit=10')
+    // Fetch data from the PokeAPI
+    setLoading(true);
+    fetch(`https://pokeapi.co/api/v2/pokemon?limit=${limit}`)
       .then((response) => response.json())
       .then((data) => {
-        const detailedPokemonPromises = data.results.map((pokemon: { url: string }) =>
-          fetch(pokemon.url).then((res) => res.json())
-        );
-        return Promise.all(detailedPokemonPromises);
+        const promises = data.results.map((poke: any) => fetch(poke.url).then((res) => res.json()));
+        Promise.all(promises).then((results) => {
+          setPokemon(results);
+          setLoading(false);
+        });
       })
-      .then((data) => {
-        setPokemonList(data);
-      })
-      .finally(() => setLoading(false))
-      .catch((error) => console.error('Error fetching data:', error));
-  }, []);
+      .catch((error) => {
+        console.error('Error fetching data:', error);
+        setLoading(false);
+      });
+  }, [limit]);
 
-  if (loading) return <p>Loading...</p>;
+  const loadMore = () => {
+    setLimit((prevLimit) => prevLimit + 20); // เพิ่มจำนวนที่แสดงอีก 20 ตัว
+  };
 
   return (
-    <main style={styles.main}>
+    <main style={{ padding: '20px' }}>
       <h1>Pokemon List</h1>
-      <div style={styles.container}>
-        {pokemonList.map((pokemon, index) => (
-          <div key={index} style={styles.card}>
-            <h2>{pokemon.name}</h2>
-            <Image
-              src={pokemon.sprites.front_default}
-              alt={pokemon.name}
-              width={100}
-              height={100}
-            />
-            <div style={{ display: 'flex', gap: '10px' }}>
-              {pokemon.types.map((type, idx) => (
-                <span
-                  key={idx}
-                  style={{
-                    backgroundColor: typeColors[type.type.name],
-                    color: 'white',
-                    padding: '5px 10px',
-                    borderRadius: '5px',
-                    textTransform: 'uppercase',
-                    fontSize: '12px',
-                  }}
-                >
-                  {type.type.name}
-                </span>
-              ))}
-            </div>
-            <button style={styles.button} onClick={() => console.log(`Selected ${pokemon.name}`)}>
-              View Details
-            </button>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
+        {pokemon.map((poke, index) => (
+          <div key={index} style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '8px', textAlign: 'center', width: '150px' }}>
+            <Link href={`/pokemon/${index + 1}`}>
+              <img src={poke.sprites.front_default} alt={poke.name} style={{ width: '100px', height: '100px' }} />
+              <h3>{poke.name}</h3>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '5px' }}>
+                {poke.types.map((type, idx) => (
+                  <span
+                    key={idx}
+                    style={{
+                      backgroundColor: typeColors[type.type.name],
+                      color: 'white',
+                      padding: '5px 10px',
+                      borderRadius: '5px',
+                      textTransform: 'uppercase',
+                      fontSize: '12px',
+                    }}
+                  >
+                    {type.type.name}
+                  </span>
+                ))}
+              </div>
+            </Link>
           </div>
         ))}
       </div>
+      {loading && <p>Loading...</p>}
+      {!loading && (
+        <button onClick={loadMore} style={{ marginTop: '20px', padding: '10px 20px' }}>
+          Load More
+        </button>
+      )}
     </main>
   );
 }
-
-const styles: React.CSSProperties = {
-  main: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    padding: '20px',
-    backgroundColor: '#f5f5f5',
-  },
-  container: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-    gap: '20px',
-    width: '100%',
-    maxWidth: '800px',
-  },
-  card: {
-    backgroundColor: 'white',
-    padding: '10px',
-    borderRadius: '10px',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-    textAlign: 'center',
-  },
-  button: {
-    marginTop: '10px',
-    padding: '10px 20px',
-    backgroundColor: '#0070f3',
-    color: 'white',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-  },
-};
