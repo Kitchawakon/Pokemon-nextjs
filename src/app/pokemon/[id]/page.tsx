@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image'; // Import Image from next/image
+import Image from 'next/image';
 
 const typeColors: { [key: string]: string } = {
   grass: '#78C850',
@@ -24,7 +24,6 @@ const typeColors: { [key: string]: string } = {
   flying: '#A890F0',
 };
 
-// Define the structure of the Pokemon data
 interface Pokemon {
   id: number;
   name: string;
@@ -40,7 +39,13 @@ export default function PokemonList() {
     fetch('https://pokeapi.co/api/v2/pokemon?limit=10')
       .then((response) => response.json())
       .then((data) => {
-        setPokemonList(data.results);
+        const detailedPokemonPromises = data.results.map((pokemon: { url: string }) =>
+          fetch(pokemon.url).then((res) => res.json())
+        );
+        return Promise.all(detailedPokemonPromises);
+      })
+      .then((data) => {
+        setPokemonList(data);
       })
       .finally(() => setLoading(false))
       .catch((error) => console.error('Error fetching data:', error));
@@ -56,10 +61,10 @@ export default function PokemonList() {
           <div key={index} style={styles.card}>
             <h2>{pokemon.name}</h2>
             <Image
-              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
+              src={pokemon.sprites.front_default}
               alt={pokemon.name}
-              width={100} // Set the width of the image
-              height={100} // Set the height of the image
+              width={100}
+              height={100}
             />
             <div style={{ display: 'flex', gap: '10px' }}>
               {pokemon.types.map((type, idx) => (
