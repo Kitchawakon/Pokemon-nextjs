@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 
 // Define colors for each Pokemon type
 const typeColors: { [key: string]: string } = {
@@ -47,6 +46,7 @@ export default function PokemonList() {
           fetch(poke.url).then((res) => res.json())
         );
         Promise.all(promises).then((results) => {
+          console.log(results); // ตรวจสอบค่าที่ได้จาก API
           setPokemon(results);
           setLoading(false);
         });
@@ -68,7 +68,8 @@ export default function PokemonList() {
         {pokemon.map((poke, index) => (
           <div key={index} style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '8px', textAlign: 'center', width: '150px' }}>
             <Link href={`/pokemon/${index + 1}`}>
-              <Image
+              {/* เปลี่ยนจาก <Image /> เป็น <img> */}
+              <img
                 src={poke.sprites.front_default}
                 alt={poke.name}
                 width={100}
