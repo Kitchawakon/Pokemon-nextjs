@@ -1,3 +1,4 @@
+//หน้าแสดงข้อมูล
 'use client';
 
 import { useEffect, useState } from 'react';
