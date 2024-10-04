@@ -1,9 +1,9 @@
-//หน้าแสดงข้อมูล
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
+// Define colors for each Pokemon type
 const typeColors: { [key: string]: string } = {
   grass: '#78C850',
   poison: '#A040A0',
@@ -22,105 +22,122 @@ const typeColors: { [key: string]: string } = {
   dragon: '#7038F8',
   dark: '#705848',
   steel: '#B8B8D0',
+  flying: '#A890F0',
 };
-
-interface PokemonType {
-  type: { name: string };
-}
 
 interface Pokemon {
   id: number;
   name: string;
-  types: PokemonType[];
+  height: number;
+  weight: number;
+  types: { type: { name: string } }[];
   sprites: { front_default: string };
+  stats: { base_stat: number; stat: { name: string } }[];
 }
 
-export default function PokemonList() {
-  const [pokemonList, setPokemonList] = useState<Pokemon[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function PokemonDetail({ params }: { params: { id: string } }) {
+  const [pokemon, setPokemon] = useState<Pokemon | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    fetch('https://pokeapi.co/api/v2/pokemon?limit=10')
+    fetch(`https://pokeapi.co/api/v2/pokemon/${params.id}`)
       .then((response) => response.json())
       .then((data) => {
-        const detailedPokemonPromises = data.results.map((pokemon: { url: string }) =>
-          fetch(pokemon.url).then((res) => res.json())
-        );
-        return Promise.all(detailedPokemonPromises);
+        setPokemon(data);
       })
-      .then((data) => {
-        setPokemonList(data);
-      })
-      .finally(() => setLoading(false))
       .catch((error) => console.error('Error fetching data:', error));
-  }, []);
+  }, [params.id]);
 
-  if (loading) return <p>Loading...</p>;
+  if (!pokemon) return <p>Loading...</p>;
+
+  // Convert height and weight to correct units
+  const height = pokemon.height / 10; // height is given in decimetres
+  const weight = pokemon.weight / 10; // weight is given in hectograms
+
+  // Find base stats
+  const hp = pokemon.stats.find((stat) => stat.stat.name === 'hp')?.base_stat;
+  const attack = pokemon.stats.find((stat) => stat.stat.name === 'attack')?.base_stat;
+  const defense = pokemon.stats.find((stat) => stat.stat.name === 'defense')?.base_stat;
+  const spAtk = pokemon.stats.find((stat) => stat.stat.name === 'special-attack')?.base_stat;
+  const spDef = pokemon.stats.find((stat) => stat.stat.name === 'special-defense')?.base_stat;
+  const speed = pokemon.stats.find((stat) => stat.stat.name === 'speed')?.base_stat;
+  const total = hp! + attack! + defense! + spAtk! + spDef! + speed!;
 
   return (
     <main style={styles.main}>
-      <h1>Pokemon List</h1>
       <div style={styles.container}>
-        {pokemonList.map((pokemon, index) => (
-          <div key={index} style={styles.card}>
-            <h2>{pokemon.name}</h2>
-            <Image
-              src={pokemon.sprites.front_default}
-              alt={pokemon.name}
-              width={100}
-              height={100}
-            />
-            <div style={{ display: 'flex', gap: '10px' }}>
-              {pokemon.types.map((type, idx) => (
-                <span
-                  key={idx}
-                  style={{
-                    backgroundColor: typeColors[type.type.name],
-                    color: 'white',
-                    padding: '5px 10px',
-                    borderRadius: '5px',
-                    textTransform: 'uppercase',
-                    fontSize: '12px',
-                  }}
-                >
-                  {type.type.name}
-                </span>
-              ))}
-            </div>
-            <button style={styles.button} onClick={() => console.log(`Selected ${pokemon.name}`)}>
-              View Details
-            </button>
-          </div>
-        ))}
+        <h1>{pokemon.name} (#{pokemon.id.toString().padStart(4, '0')})</h1>
+        <img src={pokemon.sprites.front_default} alt={pokemon.name} />
+        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+          {pokemon.types.map((type, idx) => (
+            <span
+              key={idx}
+              style={{
+                backgroundColor: typeColors[type.type.name],
+                color: 'white',
+                padding: '5px 10px',
+                borderRadius: '5px',
+                textTransform: 'uppercase',
+                fontSize: '12px',
+              }}
+            >
+              {type.type.name}
+            </span>
+          ))}
+        </div>
+
+        <div style={{ marginTop: '20px', textAlign: 'left', width: '100%' }}>
+          <p><strong>Height:</strong> {height} m</p>
+          <p><strong>Weight:</strong> {weight} kg</p>
+
+          <h3>Base Stats:</h3>
+          <ul style={styles.statsList}>
+            <li><strong>HP:</strong> {hp}</li>
+            <li><strong>Attack:</strong> {attack}</li>
+            <li><strong>Defense:</strong> {defense}</li>
+            <li><strong>Sp. Atk:</strong> {spAtk}</li>
+            <li><strong>Sp. Def:</strong> {spDef}</li>
+            <li><strong>Speed:</strong> {speed}</li>
+            <li><strong>Total:</strong> {total}</li>
+          </ul>
+        </div>
+
+        <button onClick={() => router.push('/pokemon')} style={styles.button}>
+          Back to Pokemon List
+        </button>
       </div>
     </main>
   );
 }
 
-const styles: React.CSSProperties = {
+// Define a type that extends React.CSSProperties
+type Styles = {
+  [key: string]: React.CSSProperties;
+};
+
+const styles: Styles = {
   main: {
     display: 'flex',
-    flexDirection: 'column',
+    justifyContent: 'center',
     alignItems: 'center',
-    padding: '20px',
+    height: '100vh',
     backgroundColor: '#f5f5f5',
   },
   container: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-    gap: '20px',
-    width: '100%',
-    maxWidth: '800px',
-  },
-  card: {
     backgroundColor: 'white',
-    padding: '10px',
+    padding: '20px',
     borderRadius: '10px',
     boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
     textAlign: 'center',
+    width: '300px',
+  },
+  statsList: {
+    listStyleType: 'none',
+    padding: 0,
+    textAlign: 'left', // Align stats to the left
   },
   button: {
-    marginTop: '10px',
+    marginTop: '20px',
     padding: '10px 20px',
     backgroundColor: '#0070f3',
     color: 'white',
