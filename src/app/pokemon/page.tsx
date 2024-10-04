@@ -36,7 +36,7 @@ interface Pokemon {
 
 export default function PokemonList() {
   const [pokemonList, setPokemonList] = useState<Pokemon[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true); // กำหนดประเภทที่ชัดเจน
 
   useEffect(() => {
     fetch('https://pokeapi.co/api/v2/pokemon?limit=10')
