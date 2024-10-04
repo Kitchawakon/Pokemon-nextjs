@@ -1,8 +1,8 @@
-// src/app/pokemon/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 // Define colors for each Pokemon type
 const typeColors: { [key: string]: string } = {
@@ -44,7 +44,7 @@ export default function PokemonList() {
     fetch(`https://pokeapi.co/api/v2/pokemon?limit=${limit}`)
       .then((response) => response.json())
       .then((data) => {
-        const promises = data.results.map((poke: any) => fetch(poke.url).then((res) => res.json()));
+        const promises = data.results.map((poke: { url: string }) => fetch(poke.url).then((res) => res.json()));
         Promise.all(promises).then((results) => {
           setPokemon(results);
           setLoading(false);
@@ -67,7 +67,12 @@ export default function PokemonList() {
         {pokemon.map((poke, index) => (
           <div key={index} style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '8px', textAlign: 'center', width: '150px' }}>
             <Link href={`/pokemon/${index + 1}`}>
-              <img src={poke.sprites.front_default} alt={poke.name} style={{ width: '100px', height: '100px' }} />
+              <Image
+                src={poke.sprites.front_default}
+                alt={poke.name}
+                width={100}
+                height={100}
+              />
               <h3>{poke.name}</h3>
               <div style={{ display: 'flex', justifyContent: 'center', gap: '5px' }}>
                 {poke.types.map((type, idx) => (
