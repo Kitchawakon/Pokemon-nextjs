@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image'; // Import Image from next/image
 
 // Define colors for each Pokemon type
 const typeColors: { [key: string]: string } = {
@@ -67,7 +68,13 @@ export default function PokemonDetail({ params }: { params: { id: string } }) {
     <main style={styles.main}>
       <div style={styles.container}>
         <h1>{pokemon.name} (#{pokemon.id.toString().padStart(4, '0')})</h1>
-        <img src={pokemon.sprites.front_default} alt={pokemon.name} />
+        {/* Use Image component from Next.js */}
+        <Image 
+          src={pokemon.sprites.front_default} 
+          alt={pokemon.name} 
+          width={100} // Set the width of the image
+          height={100} // Set the height of the image
+        />
         <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
           {pokemon.types.map((type, idx) => (
             <span
@@ -110,12 +117,7 @@ export default function PokemonDetail({ params }: { params: { id: string } }) {
   );
 }
 
-// Define a type that extends React.CSSProperties
-type Styles = {
-  [key: string]: React.CSSProperties;
-};
-
-const styles: Styles = {
+const styles: React.CSSProperties = {
   main: {
     display: 'flex',
     justifyContent: 'center',
