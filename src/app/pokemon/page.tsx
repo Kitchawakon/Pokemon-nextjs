@@ -39,12 +39,13 @@ export default function PokemonList() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Fetch data from the PokeAPI
     setLoading(true);
     fetch(`https://pokeapi.co/api/v2/pokemon?limit=${limit}`)
       .then((response) => response.json())
       .then((data) => {
-        const promises = data.results.map((poke: { url: string }) => fetch(poke.url).then((res) => res.json()));
+        const promises = data.results.map((poke: { url: string }) => 
+          fetch(poke.url).then((res) => res.json())
+        );
         Promise.all(promises).then((results) => {
           setPokemon(results);
           setLoading(false);
